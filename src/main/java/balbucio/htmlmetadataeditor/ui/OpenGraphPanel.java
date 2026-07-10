@@ -130,6 +130,18 @@ public class OpenGraphPanel extends JPanel {
         otherArea.setText(sb.toString());
     }
 
+    public void setTitleIfEmpty(String value) {
+        if (ogTitleField.getText().trim().isEmpty() && value != null && !value.isEmpty()) {
+            ogTitleField.setText(value);
+        }
+    }
+
+    public void setDescriptionIfEmpty(String value) {
+        if (ogDescriptionField.getText().trim().isEmpty() && value != null && !value.isEmpty()) {
+            ogDescriptionField.setText(value);
+        }
+    }
+
     public List<MetaTag> getTags() {
         List<MetaTag> tags = new ArrayList<>();
 

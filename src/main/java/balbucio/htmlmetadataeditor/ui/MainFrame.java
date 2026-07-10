@@ -29,6 +29,7 @@ public class MainFrame extends JFrame {
     private final HtmlMetadataService service = new HtmlMetadataService();
     private HtmlDocument currentDoc;
     private File currentFile;
+    private boolean isLoading;
 
     private JTextField fileField;
     private JButton loadButton;
@@ -80,6 +81,8 @@ public class MainFrame extends JFrame {
 
         add(tabbedPane, BorderLayout.CENTER);
 
+        wirePropagation();
+
         JPanel bottomPanel = new JPanel(new BorderLayout(8, 0));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
@@ -130,19 +133,41 @@ public class MainFrame extends JFrame {
     private void populatePanels() {
         if (currentDoc == null) return;
 
-        List<MetaTag> standardTags = currentDoc.getTags().stream()
-                .filter(t -> t.getType() == MetaTagType.STANDARD)
-                .collect(Collectors.toList());
-        List<MetaTag> ogTags = currentDoc.getTags().stream()
-                .filter(t -> t.getType() == MetaTagType.OPEN_GRAPH)
-                .collect(Collectors.toList());
-        List<MetaTag> twitterTags = currentDoc.getTags().stream()
-                .filter(t -> t.getType() == MetaTagType.TWITTER)
-                .collect(Collectors.toList());
+        isLoading = true;
+        try {
+            List<MetaTag> standardTags = currentDoc.getTags().stream()
+                    .filter(t -> t.getType() == MetaTagType.STANDARD)
+                    .collect(Collectors.toList());
+            List<MetaTag> ogTags = currentDoc.getTags().stream()
+                    .filter(t -> t.getType() == MetaTagType.OPEN_GRAPH)
+                    .collect(Collectors.toList());
+            List<MetaTag> twitterTags = currentDoc.getTags().stream()
+                    .filter(t -> t.getType() == MetaTagType.TWITTER)
+                    .collect(Collectors.toList());
 
-        standardPanel.loadFrom(currentDoc.getTitle(), standardTags);
-        ogPanel.loadFrom(ogTags);
-        twitterPanel.loadFrom(twitterTags);
+            standardPanel.loadFrom(currentDoc.getTitle(), standardTags);
+            ogPanel.loadFrom(ogTags);
+            twitterPanel.loadFrom(twitterTags);
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    private void wirePropagation() {
+        standardPanel.onTitleChanged(() -> {
+            if (!isLoading) {
+                String title = standardPanel.getTitle();
+                ogPanel.setTitleIfEmpty(title);
+                twitterPanel.setTitleIfEmpty(title);
+            }
+        });
+        standardPanel.onDescriptionChanged(() -> {
+            if (!isLoading) {
+                String desc = standardPanel.getDescription();
+                ogPanel.setDescriptionIfEmpty(desc);
+                twitterPanel.setDescriptionIfEmpty(desc);
+            }
+        });
     }
 
     private void saveFile() {

@@ -130,6 +130,18 @@ public class TwitterCardPanel extends JPanel {
         otherArea.setText(sb.toString());
     }
 
+    public void setTitleIfEmpty(String value) {
+        if (twTitleField.getText().trim().isEmpty() && value != null && !value.isEmpty()) {
+            twTitleField.setText(value);
+        }
+    }
+
+    public void setDescriptionIfEmpty(String value) {
+        if (twDescriptionField.getText().trim().isEmpty() && value != null && !value.isEmpty()) {
+            twDescriptionField.setText(value);
+        }
+    }
+
     public List<MetaTag> getTags() {
         List<MetaTag> tags = new ArrayList<>();
 

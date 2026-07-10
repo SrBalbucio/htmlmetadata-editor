@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import balbucio.htmlmetadataeditor.model.MetaTag;
 import balbucio.htmlmetadataeditor.model.MetaTagType;
@@ -130,6 +132,26 @@ public class StandardPanel extends JPanel {
 
     public String getTitle() {
         return titleField.getText().trim();
+    }
+
+    public String getDescription() {
+        return descriptionField.getText().trim();
+    }
+
+    public void onTitleChanged(Runnable listener) {
+        addListener(titleField, listener);
+    }
+
+    public void onDescriptionChanged(Runnable listener) {
+        addListener(descriptionField, listener);
+    }
+
+    private void addListener(JTextField field, Runnable listener) {
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { listener.run(); }
+            @Override public void removeUpdate(DocumentEvent e) { listener.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { listener.run(); }
+        });
     }
 
     public List<MetaTag> getTags() {
