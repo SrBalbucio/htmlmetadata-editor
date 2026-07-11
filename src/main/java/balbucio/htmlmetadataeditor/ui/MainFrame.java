@@ -13,6 +13,9 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -21,6 +24,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import balbucio.htmlmetadataeditor.model.MetaTag;
 import balbucio.htmlmetadataeditor.model.MetaTagType;
+import balbucio.htmlmetadataeditor.model.PreviewData;
 import balbucio.htmlmetadataeditor.service.HtmlDocument;
 import balbucio.htmlmetadataeditor.service.HtmlMetadataService;
 
@@ -38,6 +42,7 @@ public class MainFrame extends JFrame {
     private TwitterCardPanel twitterPanel;
     private JButton saveButton;
     private JLabel statusLabel;
+    private PreviewFrame previewFrame;
 
     public MainFrame() {
         super("Editor de Metadados HTML");
@@ -47,7 +52,26 @@ public class MainFrame extends JFrame {
         initComponents();
     }
 
+    HtmlMetadataService getService() {
+        return service;
+    }
+
     private void initComponents() {
+        previewFrame = new PreviewFrame(service);
+
+        JMenuBar menuBar = new JMenuBar();
+        JMenu previewMenu = new JMenu("Preview");
+        JMenuItem currentItem = new JMenuItem("Documento Atual");
+        JMenuItem urlItem = new JMenuItem("Por URL...");
+
+        currentItem.addActionListener(e -> previewCurrent());
+        urlItem.addActionListener(e -> previewFrame.focusUrlField());
+
+        previewMenu.add(currentItem);
+        previewMenu.add(urlItem);
+        menuBar.add(previewMenu);
+        setJMenuBar(menuBar);
+
         setLayout(new BorderLayout(8, 8));
 
         JPanel filePanel = new JPanel(new BorderLayout(8, 0));
@@ -168,6 +192,39 @@ public class MainFrame extends JFrame {
                 twitterPanel.setDescriptionIfEmpty(desc);
             }
         });
+    }
+
+    private void previewCurrent() {
+        if (currentDoc == null) {
+            JOptionPane.showMessageDialog(this, "Carregue um arquivo primeiro.");
+            return;
+        }
+
+        String ogTitle = getTagContent(ogPanel.getTags(), "og:title");
+        String ogDesc = getTagContent(ogPanel.getTags(), "og:description");
+        String twTitle = getTagContent(twitterPanel.getTags(), "twitter:title");
+        String twDesc = getTagContent(twitterPanel.getTags(), "twitter:description");
+
+        String title = ogTitle != null ? ogTitle : (twTitle != null ? twTitle : standardPanel.getTitle());
+        String desc = ogDesc != null ? ogDesc : (twDesc != null ? twDesc : standardPanel.getDescription());
+
+        String image = getTagContent(ogPanel.getTags(), "og:image");
+        if (image == null) image = getTagContent(twitterPanel.getTags(), "twitter:image");
+
+        String siteName = getTagContent(ogPanel.getTags(), "og:site_name");
+
+        String url = currentFile != null ? currentFile.getName() : "";
+
+        previewFrame.showPreview(new PreviewData(title, desc, image, siteName, url));
+    }
+
+    private String getTagContent(List<MetaTag> tags, String key) {
+        for (MetaTag t : tags) {
+            if (t.getKey().equals(key) && !t.getContent().isEmpty()) {
+                return t.getContent();
+            }
+        }
+        return null;
     }
 
     private void saveFile() {

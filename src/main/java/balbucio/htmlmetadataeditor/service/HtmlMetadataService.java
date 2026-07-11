@@ -9,6 +9,7 @@ import java.util.List;
 
 import balbucio.htmlmetadataeditor.model.MetaTag;
 import balbucio.htmlmetadataeditor.model.MetaTagType;
+import balbucio.htmlmetadataeditor.model.PreviewData;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -51,6 +52,34 @@ public class HtmlMetadataService {
         }
 
         return new HtmlDocument(title, tags, doc);
+    }
+
+    public PreviewData fetchPreview(String url) throws IOException {
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (compatible; MetadataPreview/1.0)")
+                .timeout(10000)
+                .followRedirects(true)
+                .get();
+
+        String title = getMetaContent(doc, "property", "og:title");
+        if (title == null) title = getMetaContent(doc, "name", "twitter:title");
+        if (title == null) title = doc.title();
+
+        String description = getMetaContent(doc, "property", "og:description");
+        if (description == null) description = getMetaContent(doc, "name", "twitter:description");
+        if (description == null) description = getMetaContent(doc, "name", "description");
+
+        String image = getMetaContent(doc, "property", "og:image");
+        if (image == null) image = getMetaContent(doc, "name", "twitter:image");
+
+        String siteName = getMetaContent(doc, "property", "og:site_name");
+
+        return new PreviewData(title, description, image, siteName, url);
+    }
+
+    private String getMetaContent(Document doc, String attr, String value) {
+        Element meta = doc.head().select("meta[" + attr + "=\"" + value.replace("\"", "") + "\"]").first();
+        return meta != null ? meta.attr("content") : null;
     }
 
     public void save(File file, HtmlDocument htmlDoc) throws IOException {
